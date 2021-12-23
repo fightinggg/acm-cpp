@@ -26,7 +26,9 @@ namespace IO {
 
 namespace Log {
     inline void error(char *msg) {
+#ifdef debug
         std::cout << msg << std::endl;
+#endif
     }
 }
 
