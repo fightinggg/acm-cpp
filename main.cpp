@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#define debug
+//#define debug
 
 /**
  *  global config
