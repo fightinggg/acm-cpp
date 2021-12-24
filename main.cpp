@@ -108,7 +108,7 @@ namespace DataStruct {
 
         inline void push_back(const T &value) { add(value); }
 
-        inline void pop_back(const T &value) {
+        inline void pop_back() {
 #ifdef ArrayListPopBackByLazy
             --size;
 #else
@@ -132,7 +132,9 @@ namespace DataStruct {
 
 int main() {
     DataStruct::ArrayList<int> a;
-    std::cout << a[1] << std::endl;
+    a.push_back(1);
+    std::cout << a[0] << std::endl;
+    a.pop_back();
 }
 
 
