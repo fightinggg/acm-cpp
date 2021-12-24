@@ -4,14 +4,15 @@
 
 #include <iostream>
 
-//#define debug
+
 
 /**
  *  global config
  */
 const double ArrayListIncreaseFactor = 2.0;
 const double ArrayListDecreaseFactor = 0.5;
-
+//#define ArrayListPopBackByLazy
+//#define debug
 
 /**
  * IO
@@ -92,6 +93,27 @@ namespace DataStruct {
             }
 #endif
             return data[x];
+        }
+
+        inline void add(const T &value) {
+            if (size == cap) {
+                cap *= ArrayListIncreaseFactor;
+                T *newData = Memory::newArray<T>(cap);
+                Algorithm::copyArray(newData, data, size);
+                Memory::deleteArray(data);
+                data = newData;
+            }
+            data[size++] = 1;
+        }
+
+        inline void push_back(const T &value) { add(value); }
+
+        inline void pop_back(const T &value) {
+#ifdef ArrayListPopBackByLazy
+            --size;
+#else
+            data[--size].~T();
+#endif
         }
     };
 
