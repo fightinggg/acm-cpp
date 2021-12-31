@@ -10,6 +10,7 @@
  */
 const double ArrayListIncreaseFactor = 2.0;
 const double ArrayListDecreaseFactor = 0.5;
+const double HashMapIncreaseFactor = 2.0;
 //#define ArrayListPopBackByLazy
 //#define debug
 
@@ -54,13 +55,33 @@ namespace Algorithm {
             target[i] = from[i];
         }
     }
+
+    template<class T>
+    int abs(T a) { return a > 0 ? a : -a; }
 }
+
+namespace TemplateProgramLanguage {
+    template<class T>
+    struct IsIntsType {
+        const static bool value = false;
+    };
+
+    template<>
+    struct IsIntsType<int> {
+        const static bool value = true;
+    };
+
+    template<>
+    struct IsIntsType<long long> {
+        const static bool value = true;
+    };
+};
 
 namespace DataStruct {
 
     template<class T>
     class ArrayList {
-        T *data; // array data
+        T *data; // array values
         int cap;
         int size;
 
@@ -116,13 +137,79 @@ namespace DataStruct {
         }
     };
 
+    struct HashCodeAble {
+        template<class T>
+        static int hashCode(T t) {
+            return t.hashCode();
+        }
+
+        template<>
+        int hashCode(int t) {
+            return t;
+        }
+    };
+
 
     template<class K, class V>
     struct HashMap {
-        HashMap() {}
+        int size;
+        int cap;
+        bool *vis;
+        K *keys;
+        V *values;
+
+        int msk;
+
+        HashMap() {
+            size = 0;
+            cap = 2;
+            msk = 1;
+            keys = Memory::newArray<K>(cap);
+            values = Memory::newArray<V>(cap);
+        }
 
         ~HashMap() {
+            Memory::deleteArray(values);
+        }
 
+        void expansionAndRehash() {
+
+        }
+
+
+        void put(const K &k, const V &v) {
+            int hashCode = HashCodeAble::hashCode(k);
+            int place = Algorithm::abs(hashCode) & msk;
+            while (vis[place]) {
+                place = (place + 1) % cap;
+            }
+            vis[place] = true;
+            keys[place] = k;
+            values[place] = v;
+            expansionAndRehash();
+        }
+
+        const V &get(const K &k) {
+            int hashCode = HashCodeAble::hashCode(k);
+            int place = Algorithm::abs(hashCode) & msk;
+            while (vis[place] && keys[place] != k) {
+                place = (place + 1) % cap;
+            }
+            return values[place];
+        }
+
+        void erase(const K &k) {
+            int hashCode = HashCodeAble::hashCode(k);
+            int place = Algorithm::abs(hashCode) & msk;
+            while (vis[place] && keys[place] != k) {
+                place = (place + 1) % cap;
+            }
+            vis[place] = false;
+            values[place];
+        }
+
+        HashMap &operator=(const HashMap &rhs) {
+            exit(-1);
         }
     };
 
@@ -136,22 +223,31 @@ namespace DataStruct {
     };
 
     struct AvlTree {
-
     };
-
-    template<class T>
-    using vector = ArrayList<T>;
-
-    template<class K, class V>
-    using map = TreeMap<K, V, AvlTree>;
 }
 
+template<class T>
+using vector = DataStruct::ArrayList<T>;
+
+template<class K, class V>
+using map = DataStruct::TreeMap<K, V, DataStruct::AvlTree>;
+
+template<class K, class V>
+using unorder_map = DataStruct::HashMap<K, V>;
+
+using std::cout;
+using std::endl;
 
 int main() {
-    DataStruct::ArrayList<int> a;
-    a.push_back(1);
-    std::cout << a[0] << std::endl;
-    a.pop_back();
+//    vector<int> a;
+//    a.push_back(1);
+//    cout << a[0] << endl;
+//    a.pop_back();
+
+
+    unorder_map<int, int> mp;
+    mp.put(1, 1);
+    cout << mp.get(1) << endl;
 }
 
 
