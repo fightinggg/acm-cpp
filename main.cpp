@@ -5,7 +5,6 @@
 #include <iostream>
 
 
-
 /**
  *  global config
  */
@@ -117,16 +116,34 @@ namespace DataStruct {
         }
     };
 
-    template<class T>
-    using vector = ArrayList<T>;
-
-
 
     template<class K, class V>
     struct HashMap {
+        HashMap() {}
+
+        ~HashMap() {
+
+        }
+    };
+
+    template<class K, class V, class Tree>
+    struct TreeMap {
+        TreeMap() {}
+
+        ~TreeMap() {
+
+        }
+    };
+
+    struct AvlTree {
 
     };
 
+    template<class T>
+    using vector = ArrayList<T>;
+
+    template<class K, class V>
+    using map = TreeMap<K, V, AvlTree>;
 }
 
 
