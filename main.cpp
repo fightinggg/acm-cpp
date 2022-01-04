@@ -11,8 +11,9 @@
 const double ArrayListIncreaseFactor = 2.0;
 const double ArrayListDecreaseFactor = 0.5;
 const double HashMapIncreaseFactor = 2.0;
+const double HashMapIncreaseThreshold = 0.75;
 //#define ArrayListPopBackByLazy
-//#define debug
+#define debug
 
 /**
  * IO
@@ -26,26 +27,52 @@ namespace IO {
 }
 
 namespace Log {
-    inline void error(char *msg) {
+    inline void error(const char *msg) {
 #ifdef debug
         std::cout << msg << std::endl;
 #endif
     }
+
+    inline void info(const char *msg) {
+#ifdef debug
+        std::cout << msg << std::endl;
+#endif
+    }
+
 }
 
 /**
  * memory
  */
 namespace Memory {
+    int newCount = 0;
+    int deleteCount = 0;
+
     template<class T>
     inline T *newArray(int size) {
+        newCount++;
         return new T[size];
     }
 
     template<class T>
     inline void deleteArray(T *point) {
+        deleteCount++;
         delete[] point;
     }
+
+
+    class Init {
+    public:
+        Init() {
+            Log::info("memory init...");
+        }
+
+        ~Init() {
+            Log::info((std::string("new ") + std::to_string(newCount) + std::string(" count")).data());
+            Log::info((std::string("delete ") + std::to_string(deleteCount) + std::string(" count")).data());
+        }
+    } init;
+
 }
 
 namespace Algorithm {
@@ -151,48 +178,75 @@ namespace DataStruct {
 
 
     template<class K, class V>
-    struct HashMap {
+    class HashMap {
         int size;
         int cap;
-        bool *vis;
+        bool *hasElement;
         K *keys;
         V *values;
 
         int msk;
 
+        inline static void
+        put(bool *hasElement, K *keys, V *values, int cap, int msk, int &size, const K &k, const V &v) {
+            int place = Algorithm::abs(HashCodeAble::hashCode(k)) & msk;
+            while (hasElement[place] && keys[place] != k) {
+                place = (place + 1) % cap;
+            }
+            size += hasElement[place] ? 0 : 1;
+            hasElement[place] = true;
+            keys[place] = k;
+            values[place] = v;
+        }
+
+    public:
+
         HashMap() {
             size = 0;
             cap = 2;
-            msk = 1;
+            msk = cap - 1;
+            hasElement = Memory::newArray<bool>(cap);
             keys = Memory::newArray<K>(cap);
             values = Memory::newArray<V>(cap);
         }
 
         ~HashMap() {
+            Memory::deleteArray(hasElement);
+            Memory::deleteArray(keys);
             Memory::deleteArray(values);
         }
 
         void expansionAndRehash() {
-
+            int newCap = cap * HashMapIncreaseFactor;
+            int newMsk = newCap - 1;
+            bool *newHasElement = Memory::newArray<bool>(newCap);
+            K *newKeys = Memory::newArray<K>(newCap);
+            V *newValues = Memory::newArray<V>(newCap);
+            for (int i = 0; i < cap; i++) {
+                int _;
+                put(newHasElement, newKeys, newValues, newCap, newMsk, _, keys[i], values[i]);
+            }
+            Memory::deleteArray(hasElement);
+            Memory::deleteArray(keys);
+            Memory::deleteArray(values);
+            cap = newCap;
+            msk = newMsk;
+            hasElement = newHasElement;
+            keys = newKeys;
+            values = newValues;
         }
 
 
         void put(const K &k, const V &v) {
-            int hashCode = HashCodeAble::hashCode(k);
-            int place = Algorithm::abs(hashCode) & msk;
-            while (vis[place]) {
-                place = (place + 1) % cap;
+            put(hasElement, keys, values, cap, msk, size, k, v);
+            if (size > HashMapIncreaseThreshold * cap) {
+                expansionAndRehash();
             }
-            vis[place] = true;
-            keys[place] = k;
-            values[place] = v;
-            expansionAndRehash();
         }
 
         const V &get(const K &k) {
-            int hashCode = HashCodeAble::hashCode(k);
-            int place = Algorithm::abs(hashCode) & msk;
-            while (vis[place] && keys[place] != k) {
+            int place = Algorithm::abs(HashCodeAble::hashCode(k)) & msk;
+            while (hasElement[place] && keys[place] != k) {
                 place = (place + 1) % cap;
             }
             return values[place];
@@ -201,10 +255,10 @@ namespace DataStruct {
         void erase(const K &k) {
             int hashCode = HashCodeAble::hashCode(k);
             int place = Algorithm::abs(hashCode) & msk;
-            while (vis[place] && keys[place] != k) {
+            while (hasElement[place] && keys[place] != k) {
                 place = (place + 1) % cap;
             }
-            vis[place] = false;
+            hasElement[place] = false;
             values[place];
         }
 
@@ -244,10 +298,17 @@ int main() {
 //    cout << a[0] << endl;
 //    a.pop_back();
 
-
     unorder_map<int, int> mp;
     mp.put(1, 1);
+    mp.put(2, 2);
+    mp.put(3, 3);
+    mp.put(4, 4);
     cout << mp.get(1) << endl;
+    mp.put(1, 2);
+    cout << mp.get(1) << endl;
+    cout << mp.get(2) << endl;
+    cout << mp.get(4) << endl;
+
 }
 
 
