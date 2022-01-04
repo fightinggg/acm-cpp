@@ -49,17 +49,24 @@ namespace Memory {
     int deleteCount = 0;
 
     template<class T>
-    inline T *newArray(int size) {
+    inline T *newArrayInit(int size) {
+#ifdef debug
         newCount++;
-        return new T[size];
+#endif
+        T *t = new T[size];
+        memset(t, 0, size * sizeof(T));
+        return t;
     }
 
     template<class T>
     inline void deleteArray(T *point) {
+#ifdef debug
         deleteCount++;
+#endif
         delete[] point;
     }
 
+#ifdef debug
 
     class Init {
     public:
@@ -73,6 +80,7 @@ namespace Memory {
         }
     } init;
 
+#endif
 }
 
 namespace Algorithm {
@@ -114,7 +122,7 @@ namespace DataStruct {
 
     public:
         ArrayList() {
-            data = Memory::newArray<T>(1);
+            data = Memory::newArrayInit<T>(1);
             size = 0;
             cap = 1;
         }
@@ -128,7 +136,7 @@ namespace DataStruct {
                 return *this;
             }
             Memory::deleteArray(data);
-            data = Memory::newArray<T>(arrayList.size);
+            data = Memory::newArrayInit<T>(arrayList.size);
             Algorithm::copyArray(data, arrayList.data, arrayList.size);
         }
 
@@ -145,7 +153,7 @@ namespace DataStruct {
         inline void add(const T &value) {
             if (size == cap) {
                 cap *= ArrayListIncreaseFactor;
-                T *newData = Memory::newArray<T>(cap);
+                T *newData = Memory::newArrayInit<T>(cap);
                 Algorithm::copyArray(newData, data, size);
                 Memory::deleteArray(data);
                 data = newData;
@@ -176,6 +184,24 @@ namespace DataStruct {
         }
     };
 
+#ifdef debug
+
+
+    class HashMapInit {
+    public:
+        int hashMapFindCount;
+        int hashMapSizeCount;
+
+        HashMapInit() {
+            Log::info("HashMap init ...");
+        }
+
+        ~HashMapInit() {
+            Log::info((std::string("HashMap  = ") + std::to_string(1.0 * hashMapFindCount / hashMapSizeCount)).data());
+        }
+    } init;
+
+#endif
 
     template<class K, class V>
     class HashMap {
@@ -192,7 +218,14 @@ namespace DataStruct {
             int place = Algorithm::abs(HashCodeAble::hashCode(k)) & msk;
             while (hasElement[place] && keys[place] != k) {
                 place = (place + 1) % cap;
+#ifdef debug
+                init.hashMapFindCount++;
+#endif
             }
+#ifdef debug
+            init.hashMapFindCount++;
+            init.hashMapSizeCount++;
+#endif
             size += hasElement[place] ? 0 : 1;
             hasElement[place] = true;
             keys[place] = k;
@@ -205,9 +238,9 @@ namespace DataStruct {
             size = 0;
             cap = 2;
             msk = cap - 1;
-            hasElement = Memory::newArray<bool>(cap);
-            keys = Memory::newArray<K>(cap);
-            values = Memory::newArray<V>(cap);
+            hasElement = Memory::newArrayInit<bool>(cap);
+            keys = Memory::newArrayInit<K>(cap);
+            values = Memory::newArrayInit<V>(cap);
         }
 
         ~HashMap() {
@@ -219,9 +252,9 @@ namespace DataStruct {
         void expansionAndRehash() {
             int newCap = cap * HashMapIncreaseFactor;
             int newMsk = newCap - 1;
-            bool *newHasElement = Memory::newArray<bool>(newCap);
-            K *newKeys = Memory::newArray<K>(newCap);
-            V *newValues = Memory::newArray<V>(newCap);
+            bool *newHasElement = Memory::newArrayInit<bool>(newCap);
+            K *newKeys = Memory::newArrayInit<K>(newCap);
+            V *newValues = Memory::newArrayInit<V>(newCap);
             for (int i = 0; i < cap; i++) {
                 int _;
                 put(newHasElement, newKeys, newValues, newCap, newMsk, _, keys[i], values[i]);
@@ -299,6 +332,13 @@ int main() {
 //    a.pop_back();
 
     unorder_map<int, int> mp;
+
+    for (int i = 1; i < 100; i++) {
+        int x = rand();
+        int y = rand();
+        mp.put(x, y);
+    }
+
     mp.put(1, 1);
     mp.put(2, 2);
     mp.put(3, 3);
