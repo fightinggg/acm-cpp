@@ -13,7 +13,8 @@ const double ArrayListDecreaseFactor = 0.5;
 const double HashMapIncreaseFactor = 2.0;
 const double HashMapIncreaseThreshold = 0.75;
 //#define ArrayListPopBackByLazy
-#define debug
+//#define debug
+#define MultiSimple
 
 /**
  * IO
@@ -24,6 +25,42 @@ namespace IO {
         scanf("%d", &x);
         return x;
     }
+
+    inline void print(char ch) {
+        putchar(ch);
+    }
+
+    inline void print(int x) {
+        if (x < 0) {
+            print('-');
+            x = -x;
+        }
+        static char buf[20];
+        static int tot;
+        tot = 0;
+        while (x) {
+            buf[tot++] = (x % 10) + '0';
+            x /= 10;
+        }
+        for (int i = tot - 1; i >= 0; i--) {
+            print(buf[x]);
+        }
+    }
+
+    inline void print(const char *x) {
+        while (*x != 0) {
+            print(*(x++));
+        }
+    }
+
+    class Init {
+    public:
+        Init() {
+            std::ios::sync_with_stdio(false);
+            std::cin.tie(nullptr);
+            std::cout.tie(nullptr);
+        }
+    } _;/* NOLINT */
 }
 
 namespace Log {
@@ -178,15 +215,12 @@ namespace DataStruct {
             return t.hashCode();
         }
 
-        template<>
-        int hashCode(int t) {
+        static int hashCode(int t) {
             return t;
         }
     };
 
 #ifdef debug
-
-
     class HashMapInit {
     public:
         int hashMapFindCount;
@@ -200,7 +234,6 @@ namespace DataStruct {
             Log::info((std::string("HashMap  = ") + std::to_string(1.0 * hashMapFindCount / hashMapSizeCount)).data());
         }
     } init;
-
 #endif
 
     template<class K, class V>
@@ -313,42 +346,54 @@ namespace DataStruct {
     };
 }
 
-template<class T>
-using vector = DataStruct::ArrayList<T>;
+namespace stdadapt {
+    template<class T>
+    using vector = DataStruct::ArrayList<T>;
 
-template<class K, class V>
-using map = DataStruct::TreeMap<K, V, DataStruct::AvlTree>;
+    template<class K, class V>
+    using map = DataStruct::TreeMap<K, V, DataStruct::AvlTree>;
 
-template<class K, class V>
-using unorder_map = DataStruct::HashMap<K, V>;
+    template<class K, class V>
+    using unorder_map = DataStruct::HashMap<K, V>;
 
-using std::cout;
-using std::endl;
+    using std::cout;
+    using std::endl;
+
+}
+
+using namespace stdadapt;
+
+
+// inline 可以对多样例有明显加速
+inline void solve(int turn) {
+    int n = IO::readInt();
+    int k = IO::readInt();
+    if (k > ((n + 1) / 2)) {
+        IO::print("-1\n");
+    } else {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == j && i % 2 == 0 && k) {
+                    k--;
+                    IO::print('R');
+                } else {
+                    IO::print('.');
+                }
+            }
+            IO::print('\n');
+        }
+    }
+}
 
 int main() {
-//    vector<int> a;
-//    a.push_back(1);
-//    cout << a[0] << endl;
-//    a.pop_back();
-
-    unorder_map<int, int> mp;
-
-    for (int i = 1; i < 100; i++) {
-        int x = rand();
-        int y = rand();
-        mp.put(x, y);
+#ifdef MultiSimple
+    int n = IO::readInt();
+    for (int i = 1; i <= n; i++) {
+        solve(i);
     }
-
-    mp.put(1, 1);
-    mp.put(2, 2);
-    mp.put(3, 3);
-    mp.put(4, 4);
-    cout << mp.get(1) << endl;
-    mp.put(1, 2);
-    cout << mp.get(1) << endl;
-    cout << mp.get(2) << endl;
-    cout << mp.get(4) << endl;
-
+#else
+    solve(1);
+#endif
 }
 
 
