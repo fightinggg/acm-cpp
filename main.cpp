@@ -1,8 +1,10 @@
-/**
+﻿/**
  * author: polin and fightinggg
  */
 
 #include <iostream>
+#include <cstring>
+#include <queue>
 
 
 /**
@@ -35,12 +37,12 @@ namespace IO {
         static char buf[20];
         static int tot;
         tot = 0;
-        while (x) {
+        do {
             buf[tot++] = (x % 10) + '0';
             x /= 10;
-        }
+        } while (x);
         for (int i = tot - 1; i >= 0; i--) {
-            print(buf[x]);
+            print(buf[i]);
         }
     }
 
@@ -123,7 +125,37 @@ namespace Algorithm {
     }
 
     template<class T>
-    int abs(T a) { return a > 0 ? a : -a; }
+    T abs(const T &a) { return a > 0 ? a : -a; }
+
+    template<class T>
+    T max(const T &a, const T &b) { return a > b ? a : b; }
+
+    template<class T>
+    T min(const T &a, const T &b) { return a < b ? a : b; }
+
+    inline int findTheFirstMatch(int l, int r, bool(*check)(int i)) {
+        while (l < r) {
+            int mid = (l + r) / 2;
+            if (check(mid)) {
+                r = mid;
+            } else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+
+    inline int findTheLastMatch(int l, int r, bool(*check)(int i)) {
+        while (l < r) {
+            int mid = (l + r + 1) / 2;
+            if (check(mid)) {
+                l = mid;
+            } else {
+                r = mid - 1;
+            }
+        }
+        return l;
+    }
 }
 
 namespace TemplateProgramLanguage {
@@ -156,6 +188,12 @@ namespace DataStruct {
             data = Memory::newArrayInit<T>(1);
             size = 0;
             cap = 1;
+        }
+
+        ArrayList(int size) {
+            data = Memory::newArrayInit<T>(size);
+            this->size = size;
+            this->cap = size;
         }
 
         ~ArrayList() {
@@ -338,6 +376,100 @@ namespace DataStruct {
 
     struct AvlTree {
     };
+
+    class Graph {
+        int *head;
+        int *to, *nex, *ew;
+        int tot;
+    public:
+        /**
+         * @param edgeSize 单向边的个数
+         * @param vertexSize 点的个数 vertex: [0,vertexSize-1)
+         */
+        Graph(int edgeSize, int vertexSize) {
+            head = Memory::newArrayInit<int>(vertexSize);
+            to = Memory::newArrayInit<int>(edgeSize);
+            nex = Memory::newArrayInit<int>(edgeSize);
+            ew = Memory::newArrayInit<int>(edgeSize);
+        }
+
+        ~Graph() {
+        }
+
+        void addedge(int u, int v, int w) { to[++tot] = v, nex[tot] = head[u], ew[tot] = w, head[u] = tot; }
+    };
+
+    class MaxFlow {
+#define rep(i, j, k) for(int i=j;i<=(k);++i)
+#define repe(i, u) for(int i=head[u];i;i=nex[i])
+        typedef long long ll;
+        static const int V = 5e4 + 5, E = 5e4 + 5;
+        int head[V];
+        int to[E], nex[E], ew[E], tot = 1;
+
+        //最大流最小割算法
+        int lv[V], current[V], src, dst;
+        int *cap = ew;//容量等于边权
+
+
+        bool maxflowbfs() {
+            using std::queue;
+            queue<int> q;
+            lv[src] = 0, q.push(src);
+            while (!q.empty()) {
+                int u = q.front();
+                q.pop();
+                repe(i, u) {
+                    if (cap[i] == 0 || lv[to[i]] >= 0)continue;
+                    lv[to[i]] = lv[u] + 1, q.push(to[i]);
+                }
+            }
+            return lv[dst] >= 0;
+        }
+
+        int maxflowdfs(int u, int f) {
+            if (u == dst)return f;
+            for (int &i = current[u]; i; i = nex[i]) {//当前弧优化
+                if (cap[i] == 0 || lv[u] >= lv[to[i]])continue;
+                int flow = maxflowdfs(to[i], Algorithm::min(f, cap[i]));
+                if (flow == 0) continue;
+                cap[i] -= flow, cap[i ^ 1] += flow;
+                return flow;
+            }
+            return 0;
+        }
+
+        void addedge1(int u, int v, int w) { to[++tot] = v, nex[tot] = head[u], ew[tot] = w, head[u] = tot; }
+
+    public:
+        void clear() {
+            tot = 1;
+            for (int i = 0; i <= maxVertex; i++) {
+                head[i] = 0;
+            }
+            maxVertex = 0;
+        }
+
+        int maxVertex = 0;
+
+        void addedge(int u, int v, int w) {
+            maxVertex = Algorithm::max(u, maxVertex);
+            maxVertex = Algorithm::max(v, maxVertex);
+            addedge1(u, v, w);
+            addedge1(v, u, 0);
+        }
+
+        ll maxflow(int n, int s, int t) {
+            src = s, dst = t;
+            ll flow = 0, f = 0;// 计算最大流的过程中不可能爆int 唯独在最后对流量求和对时候可能会比较大 所以只有这里用ll
+            while (true) {
+                rep(i, 1, n) current[i] = head[i], lv[i] = -1;
+                if (!maxflowbfs())return flow;
+                while (f = maxflowdfs(src, 2e9))
+                    flow += f;
+            }
+        }
+    };
 }
 
 namespace stdadapt {
@@ -357,26 +489,42 @@ namespace stdadapt {
 
 using namespace stdadapt;
 
+static DataStruct::MaxFlow mf;
 
 // inline 可以对多样例有明显加速
 inline void solve(int turn) {
+    mf.clear();
     int n = IO::readInt();
-    int k = IO::readInt();
-    if (k > ((n + 1) / 2)) {
-        IO::print("-1\n");
-    } else {
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (i == j && i % 2 == 0 && k) {
-                    k--;
-                    IO::print('R');
-                } else {
-                    IO::print('.');
-                }
-            }
-            IO::print('\n');
+    int size = 1;
+    int s = size++;
+    int t = size++;
+
+    unorder_map<int, int> numbers;
+    for (int i = 1; i <= n; i++) {
+        numbers.put(i, size++);
+        mf.addedge(s, numbers.get(i), 1);
+    }
+    for (int i = 0; i < n; i++) {
+        int x = IO::readInt();
+        int out = size++;
+        mf.addedge(out, t, 1);
+
+        while (x) {
+            int node = size++;
+            mf.addedge(numbers.get(x), node, 1);
+            mf.addedge(node, out, 1);
+            x /= 2;
         }
     }
+
+    long long w = mf.maxflow(size, s, t);
+    if (w == n) {
+        IO::print("YES\n");
+    } else {
+        IO::print("NO\n");
+    }
+
+
 }
 
 int main() {
