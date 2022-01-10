@@ -16,9 +16,6 @@ const double HashMapIncreaseThreshold = 0.75;
 //#define debug
 #define MultiSimple
 
-/**
- * IO
- */
 namespace IO {
     inline int readInt() {
         static int x;
@@ -78,9 +75,6 @@ namespace Log {
 
 }
 
-/**
- * memory
- */
 namespace Memory {
     int newCount = 0;
     int deleteCount = 0;
