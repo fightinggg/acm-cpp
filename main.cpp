@@ -6,17 +6,16 @@
 #include <cstring>
 #include <queue>
 
-
 /**
  *  global config
  */
-const double ArrayListIncreaseFactor = 2.0;
-const double ArrayListDecreaseFactor = 0.5;
-const double HashMapIncreaseFactor = 2.0;
-const double HashMapIncreaseThreshold = 0.75;
 //#define ArrayListPopBackByLazy
 //#define debug
 #define MultiSimple
+#define ArrayListIncreaseFactor 2.0
+#define ArrayListDecreaseFactor 0.5
+#define HashMapIncreaseFactor 2.0
+#define HashMapIncreaseThreshold 0.75
 
 namespace IO {
     inline int readInt() {
@@ -378,39 +377,39 @@ namespace DataStruct {
     };
 
     class Graph {
+    protected:
         int *head;
         int *to, *nex, *ew;
         int tot;
+
+        int edgeSize, vertexSize;
     public:
         /**
          * @param edgeSize 单向边的个数
          * @param vertexSize 点的个数 vertex: [0,vertexSize-1)
          */
         Graph(int edgeSize, int vertexSize) {
+            this->edgeSize = edgeSize;
+            this->vertexSize = vertexSize;
             head = Memory::newArrayInit<int>(vertexSize);
             to = Memory::newArrayInit<int>(edgeSize);
             nex = Memory::newArrayInit<int>(edgeSize);
             ew = Memory::newArrayInit<int>(edgeSize);
+            tot = 1;
         }
 
         ~Graph() {
         }
 
-        void addedge(int u, int v, int w) { to[++tot] = v, nex[tot] = head[u], ew[tot] = w, head[u] = tot; }
+        void addSimpleEdge(int u, int v, int w) { to[++tot] = v, nex[tot] = head[u], ew[tot] = w, head[u] = tot; }
     };
 
-    class MaxFlow {
-#define rep(i, j, k) for(int i=j;i<=(k);++i)
-#define repe(i, u) for(int i=head[u];i;i=nex[i])
-        typedef long long ll;
-        static const int V = 5e4 + 5, E = 5e4 + 5;
-        int head[V];
-        int to[E], nex[E], ew[E], tot = 1;
 
-        //最大流最小割算法
-        int lv[V], current[V], src, dst;
-        int *cap = ew;//容量等于边权
 
+    // 最大流最小割算法
+    class MaxFlow : Graph {
+        int *lv, *current, src, dst;
+        int *cap;//容量等于边权
 
         bool maxflowbfs() {
             using std::queue;
@@ -419,7 +418,7 @@ namespace DataStruct {
             while (!q.empty()) {
                 int u = q.front();
                 q.pop();
-                repe(i, u) {
+                for (int i = head[u]; i; i = nex[i]) {
                     if (cap[i] == 0 || lv[to[i]] >= 0)continue;
                     lv[to[i]] = lv[u] + 1, q.push(to[i]);
                 }
@@ -439,31 +438,27 @@ namespace DataStruct {
             return 0;
         }
 
-        void addedge1(int u, int v, int w) { to[++tot] = v, nex[tot] = head[u], ew[tot] = w, head[u] = tot; }
 
     public:
-        void clear() {
-            tot = 1;
-            for (int i = 0; i <= maxVertex; i++) {
-                head[i] = 0;
-            }
-            maxVertex = 0;
+        MaxFlow(int edgeSize, int vertexSize) : Graph(edgeSize, vertexSize) {
+            lv = Memory::newArrayInit<int>(vertexSize);
+            current = Memory::newArrayInit<int>(vertexSize);
+            cap = Memory::newArrayInit<int>(edgeSize);
+            src = -1;
+            dst = -1;
         }
 
-        int maxVertex = 0;
-
-        void addedge(int u, int v, int w) {
-            maxVertex = Algorithm::max(u, maxVertex);
-            maxVertex = Algorithm::max(v, maxVertex);
-            addedge1(u, v, w);
-            addedge1(v, u, 0);
+        void addDoubleEdge(int u, int v, int w) {
+            addSimpleEdge(u, v, w);
+            addSimpleEdge(v, u, 0);
         }
 
-        ll maxflow(int n, int s, int t) {
+        long long maxflow(int n, int s, int t) {
             src = s, dst = t;
-            ll flow = 0, f = 0;// 计算最大流的过程中不可能爆int 唯独在最后对流量求和对时候可能会比较大 所以只有这里用ll
+            long long flow = 0, f = 0;// 计算最大流的过程中不可能爆int 唯独在最后对流量求和对时候可能会比较大 所以只有这里用ll
+            Algorithm::copyArray(cap, ew, this->edgeSize);
             while (true) {
-                rep(i, 1, n) current[i] = head[i], lv[i] = -1;
+                for (int i = 1; i <= n; ++i) current[i] = head[i], lv[i] = -1;
                 if (!maxflowbfs())return flow;
                 while (f = maxflowdfs(src, 2e9))
                     flow += f;
@@ -489,11 +484,10 @@ namespace stdadapt {
 
 using namespace stdadapt;
 
-static DataStruct::MaxFlow mf;
 
 // inline 可以对多样例有明显加速
 inline void solve(int turn) {
-    mf.clear();
+    DataStruct::MaxFlow mf(1e5, 2e5);
     int n = IO::readInt();
     int size = 1;
     int s = size++;
@@ -502,17 +496,17 @@ inline void solve(int turn) {
     unorder_map<int, int> numbers;
     for (int i = 1; i <= n; i++) {
         numbers.put(i, size++);
-        mf.addedge(s, numbers.get(i), 1);
+        mf.addDoubleEdge(s, numbers.get(i), 1);
     }
     for (int i = 0; i < n; i++) {
         int x = IO::readInt();
         int out = size++;
-        mf.addedge(out, t, 1);
+        mf.addDoubleEdge(out, t, 1);
 
         while (x) {
             int node = size++;
-            mf.addedge(numbers.get(x), node, 1);
-            mf.addedge(node, out, 1);
+            mf.addDoubleEdge(numbers.get(x), node, 1);
+            mf.addDoubleEdge(node, out, 1);
             x /= 2;
         }
     }
@@ -537,5 +531,3 @@ int main() {
     solve(1);
 #endif
 }
-
-
