@@ -16,6 +16,7 @@
 #define ArrayListDecreaseFactor 0.5
 #define HashMapIncreaseFactor 2.0
 #define HashMapIncreaseThreshold 0.75
+#define MemoryPageByteSize ( 4<<10 /* 4kb */ )
 
 namespace IO {
     inline int readInt() {
@@ -77,6 +78,59 @@ namespace Log {
 }
 
 namespace Memory {
+    namespace CppMemory {
+        inline void *getMemory(int size) {
+
+        }
+
+        inline void *deleteMemory(void *ptr) {
+
+        }
+    }
+
+    namespace PageMemory {
+        inline void *getMemory(int size) {
+
+        }
+    }
+
+    namespace BitMapMemoryPool {
+        template<int PoolSize>
+        struct MemoryPool {
+            void *memory;
+            void *memoryBitMap;
+        };
+
+        template<int size>
+        inline void *getMemory() {
+        }
+    }
+
+    namespace StackMemoryPool {
+        template<int MemoryUnitSize, int BucketSize>
+        inline void *getMemory() {
+            static void ***poolBucket = nullptr;
+            static int poolBucketCap = 0;
+            static int poolBucketSize = 0;
+
+            static int *stack = nullptr;
+            static int stackCap = 0;
+            static int stackSize = 0;
+
+            if (stackSize == 0) {
+
+
+
+            } else {
+                stackSize--;
+                int index = stack[stackSize];
+                return index < BucketSize ? poolBucket[0][index] : poolBucket[index / BucketSize][index % BucketSize];
+            }
+
+        }
+    }
+
+
     int newCount = 0;
     int deleteCount = 0;
 
@@ -403,7 +457,6 @@ namespace DataStruct {
 
         void addSimpleEdge(int u, int v, int w) { to[++tot] = v, nex[tot] = head[u], ew[tot] = w, head[u] = tot; }
     };
-
 
 
     // 最大流最小割算法
